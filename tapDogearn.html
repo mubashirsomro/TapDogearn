@@ -6,16 +6,16 @@
     <title>TapDog Game</title>
     <style>
         :root {
-            --primary-color: #5a67d8; /* Purple-blue from the image */
-            --secondary-color: #4c51bf; /* Darker purple-blue */
-            --background-color: #f8fafc; /* Light background */
-            --surface-color: #ffffff; /* White cards/surfaces */
-            --text-color: #2d3748; /* Dark gray for text */
-            --energy-bar-color: #667eea; /* Lighter blue for energy bar */
-            --energy-bar-bg: #e2e8f0; /* Light gray for energy bar background */
-            --gold-color: #f6ad55; /* Gold/yellow from the diamond in image */
-            --gold-border: #dd6b20; /* Darker gold border */
-            --button-active-color: #434190; /* Darker purple for active buttons */
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #f0f2f5;
+            --surface-color: #ffffff;
+            --text-color: #333333;
+            --energy-bar-color: #28a745;
+            --energy-bar-bg: #e9ecef;
+            --gold-color: #FFD700;
+            --gold-border: #DAA520;
+            --button-active-color: #0056b3;
         }
 
         body {
@@ -27,28 +27,28 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            overflow: hidden;
+            overflow: hidden; /* Prevents scrolling of the whole page */
         }
 
         #app {
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: hidden; /* Allows content to scroll if needed */
         }
 
         .page {
             display: none;
             flex-grow: 1;
             padding: 20px;
-            padding-bottom: 80px;
-            overflow-y: auto;
+            padding-bottom: 80px; /* Space for bottom nav */
+            overflow-y: auto; /* Allow scrolling within the page */
             background-color: var(--surface-color);
             animation: fadeIn 0.3s ease-in-out;
         }
 
         .page.active {
-            display: flex;
+            display: flex; /* Use flex for centering or other layout needs */
             flex-direction: column;
         }
         
@@ -113,7 +113,7 @@
         }
 
         #tap-target-container {
-            position: relative;
+            position: relative; /* For floating points */
         }
         
         #tap-target-icon {
@@ -127,16 +127,9 @@
             transform: scale(0.95);
         }
 
-        #tap-target-icon circle {
-            fill: var(--gold-color);
-            stroke: var(--gold-border);
-            stroke-width: 2;
-        }
-
         .energy-display {
             width: 80%;
             max-width: 300px;
-            color: var(--secondary-color);
         }
         
         #energy-bar-container {
@@ -150,7 +143,7 @@
 
         #energy-bar {
             height: 100%;
-            width: 100%;
+            width: 100%; /* Default to full */
             background-color: var(--energy-bar-color);
             border-radius: 10px;
             transition: width 0.2s ease-in-out;
@@ -163,7 +156,7 @@
             color: var(--gold-color);
             opacity: 1;
             animation: floatUp 1s ease-out forwards;
-            pointer-events: none;
+            pointer-events: none; /* So it doesn't interfere with taps */
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
 
@@ -250,7 +243,7 @@
         }
         .withdraw-form button {
             padding: 12px;
-            background-color: var(--primary-color);
+            background-color: var(--energy-bar-color); /* Green for withdraw */
             color: white;
             border: none;
             border-radius: 5px;
@@ -259,7 +252,7 @@
             transition: background-color 0.2s;
         }
         .withdraw-form button:hover {
-             background-color: var(--button-active-color);
+             background-color: #218838;
         }
         #withdrawal-history-list {
             list-style-type: none;
@@ -372,7 +365,7 @@
                 <div class="points-display">Points: <span id="tap-points">0</span></div>
                 <div id="tap-target-container">
                     <svg id="tap-target-icon" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="45"/>
+                        <circle cx="50" cy="50" r="45" fill="var(--gold-color)" stroke="var(--gold-border)" stroke-width="2"/>
                         <text x="50%" y="57%" dominant-baseline="middle" text-anchor="middle" font-size="50">🐕</text>
                     </svg>
                 </div>
