@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TapDog Game</title>
+    <style>
+        :root {
+            --primary-color: #5a67d8; /* Purple-blue from the image */
+            --secondary-color: #4c51bf; /* Darker purple-blue */
+            --background-color: #f8fafc; /* Light background */
+            --surface-color: #ffffff; /* White cards/surfaces */
+            --text-color: #2d3748; /* Dark gray for text */
+            --energy-bar-color: #667eea; /* Lighter blue for energy bar */
+            --energy-bar-bg: #e2e8f0; /* Light gray for energy bar background */
+            --gold-color: #f6ad55; /* Gold/yellow from the diamond in image */
+            --gold-border: #dd6b20; /* Darker gold border */
+            --button-active-color: #434190; /* Darker purple for active buttons */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #app {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .page {
+            display: none;
+            flex-grow: 1;
+            padding: 20px;
+            padding-bottom: 80px;
+            overflow-y: auto;
+            background-color: var(--surface-color);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .page.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-color: var(--surface-color);
+            border-top: 1px solid #ddd;
+            padding: 10px 0;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+        }
+
+        #bottom-nav button {
+            background: none;
+            border: none;
+            color: var(--secondary-color);
+            font-size: 12px;
+            padding: 8px 5px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: color 0.2s;
+        }
+        
+        #bottom-nav button .icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        #bottom-nav button.active {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        /* Tap Section */
+        #tap-section-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 20px;
+            flex-grow: 1;
+        }
+
+        .points-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        #tap-target-container {
+            position: relative;
+        }
+        
+        #tap-target-icon {
+            width: 150px;
+            height: 150px;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s ease-out;
+        }
+        #tap-target-icon:active {
+            transform: scale(0.95);
+        }
+
+        #tap-target-icon circle {
+            fill: var(--gold-color);
+            stroke: var(--gold-border);
+            stroke-width: 2;
+        }
+
+        .energy-display {
+            width: 80%;
+            max-width: 300px;
+            color: var(--secondary-color);
+        }
+        
+        #energy-bar-container {
+            width: 100%;
+            height: 20px;
+            background-color: var(--energy-bar-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        #energy-bar {
+            height: 100%;
+            width: 100%;
+            background-color: var(--energy-bar-color);
+            border-radius: 10px;
+            transition: width 0.2s ease-in-out;
+        }
+
+        .floating-point {
+            position: absolute;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--gold-color);
+            opacity: 1;
+            animation: floatUp 1s ease-out forwards;
+            pointer-events: none;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        @keyframes floatUp {
+            to {
+                transform: translateY(-80px);
+                opacity: 0;
+            }
+        }
+
+        /* Profile Section */
+        #profile-section .info-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+        #profile-section .info-item strong {
+            color: var(--primary-color);
+        }
+        #profile-section .referral-link {
+            word-break: break-all;
+            padding: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        /* Task Section */
+        .task-list {
+            list-style: none;
+            padding: 0;
+        }
+        .task-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #eee;
+        }
+        .task-item .task-info {
+            flex-grow: 1;
+        }
+        .task-item .task-info small {
+            color: #666;
+        }
+        .task-item button {
+            padding: 8px 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .task-item button:hover {
+            background-color: var(--button-active-color);
+        }
+        .task-item button:disabled {
+            background-color: var(--secondary-color);
+            cursor: not-allowed;
+        }
+
+        /* Withdraw Section */
+        .withdraw-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .withdraw-form label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .withdraw-form input, .withdraw-form select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .withdraw-form button {
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .withdraw-form button:hover {
+             background-color: var(--button-active-color);
+        }
+        #withdrawal-history-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        #withdrawal-history-list li {
+            background: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        /* Modal */
+        #modal-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+        }
+        #modal-container.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            width: 80%;
+            max-width: 350px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transform: scale(0.95);
+            transition: transform 0.3s ease-in-out;
+        }
+        #modal-container.visible #modal-content {
+             transform: scale(1);
+        }
+        #modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        #modal-message {
+            font-size: 16px;
+            margin-bottom: 20px;
+            color: #555;
+        }
+        #modal-buttons button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        #modal-confirm-button {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        #modal-confirm-button:hover {
+            background-color: var(--button-active-color);
+        }
+        #modal-cancel-button, #modal-ok-button {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        #modal-cancel-button:hover, #modal-ok-button:hover {
+            background-color: #5a6268;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Profile Section -->
+        <div id="profile-section" class="page">
+            <h2>👤 Profile</h2>
+            <div id="profile-content">
+                <div class="info-item"><strong>Name:</strong> <span id="profile-name"></span></div>
+                <div class="info-item"><strong>Joined:</strong> <span id="profile-join-date"></span></div>
+                <div class="info-item"><strong>Total Points:</strong> <span id="profile-points"></span></div>
+                <div class="info-item">
+                    <strong>Referral Link:</strong>
+                    <div id="profile-referral-link" class="referral-link"></div>
+                    <button id="copy-referral-button" style="margin-top: 5px; padding: 5px 10px; font-size: 12px;">Copy</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tap Section -->
+        <div id="tap-section" class="page active">
+            <div id="tap-section-content">
+                <div class="points-display">Points: <span id="tap-points">0</span></div>
+                <div id="tap-target-container">
+                    <svg id="tap-target-icon" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45"/>
+                        <text x="50%" y="57%" dominant-baseline="middle" text-anchor="middle" font-size="50">🐕</text>
+                    </svg>
+                </div>
+                <div class="energy-display">
+                    Energy: <span id="energy-value">100</span> / <span id="max-energy-value">100</span>
+                    <div id="energy-bar-container">
+                        <div id="energy-bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Section -->
+        <div id="task-section" class="page">
+            <h2>✅ Tasks</h2>
+            <ul id="task-list" class="task-list">
+                <!-- Tasks will be rendered here by JavaScript -->
+            </ul>
+        </div>
+
+        <!-- Withdraw Section -->
+        <div id="withdraw-section" class="page">
+            <h2>💸 Withdraw</h2>
+            <form id="withdraw-form" class="withdraw-form">
+                <div>
+                    <label for="withdraw-amount">Amount to Withdraw:</label>
+                    <input type="number" id="withdraw-amount" placeholder="Enter amount" required>
+                </div>
+                <div>
+                    <label for="withdraw-method">Withdrawal Method:</label>
+                    <select id="withdraw-method">
+                        <!-- Options will be rendered here -->
+                    </select>
+                </div>
+                <div id="withdraw-details-fields">
+                    <!-- Dynamic fields based on selected method -->
+                </div>
+                <button type="submit">Request Withdraw</button>
+            </form>
+            <h3 style="margin-top: 30px; font-size: 18px; color: var(--primary-color);">Withdrawal History</h3>
+            <ul id="withdrawal-history-list">
+                <!-- History items will be rendered here -->
+            </ul>
+        </div>
+
+        <nav id="bottom-nav">
+            <button data-page="profile"><span class="icon">👤</span>Profile</button>
+            <button data-page="tap" class="active"><span class="icon">👆</span>Tap</button>
+            <button data-page="task"><span class="icon">✅</span>Task</button>
+            <button data-page="withdraw"><span class="icon">💸</span>Withdraw</button>
+        </nav>
+    </div>
+
+    <!-- Modal Structure -->
+    <div id="modal-container">
+        <div id="modal-content">
+            <h3 id="modal-title">Notification</h3>
+            <p id="modal-message"></p>
+            <div id="modal-buttons">
+                <button id="modal-confirm-button" style="display:none;">Confirm</button>
+                <button id="modal-cancel-button" style="display:none;">Cancel</button>
+                <button id="modal-ok-button" style="display:none;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            userData: {},
+            config: {
+                maxEnergy: 100,
+                energyPerTap: 1,
+                energyRegenRatePerSecond: 0.5, // Energy points regenerated per second
+                energyRegenInterval: 1000, // ms, for checking regeneration
+                pointsPerTap: 1,
+            },
+            elements: {},
+            tasks: [
+                { id: 'task_yt_1', title: 'Watch "Intro to Our App"', youtubeLink: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', points: 1000, duration: '3:32 min' },
+                { id: 'task_yt_2', title: 'Learn About Tapping Strategy', youtubeLink: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', points: 1000, duration: '5:10 min' },
+                { id: 'task_yt_3', title: 'Understanding Point System', youtubeLink: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', points: 1000, duration: '4:20 min' },
+                { id: 'task_yt_4', title: 'How Referrals Work', youtubeLink: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', points: 1000, duration: '2:55 min' },
+                { id: 'task_yt_5', title: 'Future of TapDog', youtubeLink: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', points: 1000, duration: '6:00 min' }
+            ],
+            withdrawalMethods: [
+                { id: 'paypal', name: 'PayPal', fields: [{ name: 'email', label: 'PayPal Email', type: 'email', placeholder: 'your@email.com' }] },
+                { id: 'wire', name: 'Wire Transfer', fields: [
+                    { name: 'accountHolder', label: 'Account Holder Name', type: 'text', placeholder: 'John Doe'},
+                    { name: 'accountNumber', label: 'Account Number', type: 'text', placeholder: '1234567890' }, 
+                    { name: 'bankName', label: 'Bank Name', type: 'text', placeholder: 'My Bank Inc.' },
+                    { name: 'swiftCode', label: 'SWIFT/BIC Code', type: 'text', placeholder: 'BANKUS33' }
+                ]},
+                { id: 'usdt', name: 'USDT (TRC20)', fields: [{ name: 'walletAddress', label: 'USDT Wallet Address (TRC20)', type: 'text', placeholder: 'T...' }] }
+            ],
+            activePage: 'tap',
+            energyRegenTimer: null,
+
+            init() {
+                // Mock Telegram Web App context for local development
+                // if (window.Telegram && window.Telegram.WebApp) {
+                //     Telegram.WebApp.ready();
+                //     const tgUser = Telegram.WebApp.initDataUnsafe.user;
+                //     this.mockUserName = tgUser ? `${tgUser.first_name} ${tgUser.last_name || ''}`.trim() : "Telegram User";
+                //     this.mockUserId = tgUser ? tgUser.id.toString() : null;
+                // }
+
+                this.cacheDOMElements();
+                this.loadUserData();
+                this.setupEventListeners();
+                
+                this.renderAllSections(); // Populate dynamic content
+                this.showPage(this.activePage || 'tap'); // Show last active or default page
+                this.startEnergyRegeneration();
+                this.updateUI(); // Initial UI update for points, energy etc.
+            },
+
+            cacheDOMElements() {
+                this.elements.pages = {
+                    profile: document.getElementById('profile-section'),
+                    tap: document.getElementById('tap-section'),
+                    task: document.getElementById('task-section'),
+                    withdraw: document.getElementById('withdraw-section'),
+                };
+                this.elements.navButtons = document.querySelectorAll('#bottom-nav button');
+                
+                // Profile
+                this.elements.profileName = document.getElementById('profile-name');
+                this.elements.profileJoinDate = document.getElementById('profile-join-date');
+                this.elements.profilePoints = document.getElementById('profile-points');
+                this.elements.profileReferralLink = document.getElementById('profile-referral-link');
+                this.elements.copyReferralButton = document.getElementById('copy-referral-button');
+
+                // Tap
+                this.elements.tapPoints = document.getElementById('tap-points');
+                this.elements.tapTargetIcon = document.getElementById('tap-target-icon');
+                this.elements.tapTargetContainer = document.getElementById('tap-target-container');
+                this.elements.energyValue = document.getElementById('energy-value');
+                this.elements.maxEnergyValue = document.getElementById('max-energy-value');
+                this.elements.energyBar = document.getElementById('energy-bar');
+
+                // Task
+                this.elements.taskList = document.getElementById('task-list');
+
+                // Withdraw
+                this.elements.withdrawForm = document.getElementById('withdraw-form');
+                this.elements.withdrawAmountInput = document.getElementById('withdraw-amount');
+                this.elements.withdrawMethodSelect = document.getElementById('withdraw-method');
+                this.elements.withdrawDetailsFields = document.getElementById('withdraw-details-fields');
+                this.elements.withdrawalHistoryList = document.getElementById('withdrawal-history-list');
+                
+                // Modal
+                this.elements.modalContainer = document.getElementById('modal-container');
+                this.elements.modalTitle = document.getElementById('modal-title');
+                this.elements.modalMessage = document.getElementById('modal-message');
+                this.elements.modalConfirmButton = document.getElementById('modal-confirm-button');
+                this.elements.modalCancelButton = document.getElementById('modal-cancel-button');
+                this.elements.modalOkButton = document.getElementById('modal-ok-button');
+                this.elements.modalButtons = document.getElementById('modal-buttons');
+            },
+
+            loadUserData() {
+                const savedData = localStorage.getItem('tapDogUserData');
+                if (savedData) {
+                    this.userData = JSON.parse(savedData);
+                    // Ensure all config values are present even if saved data is old
+                    this.userData.maxEnergy = this.userData.maxEnergy || this.config.maxEnergy;
+                    this.userData.energyPerTap = this.userData.energyPerTap || this.config.energyPerTap;
+                    this.userData.energyRegenRatePerSecond = this.userData.energyRegenRatePerSecond || this.config.energyRegenRatePerSecond;
+                    this.userData.pointsPerTap = this.userData.pointsPerTap || this.config.pointsPerTap;
+                    this.activePage = this.userData.lastActivePage || 'tap';
+                } else {
+                    this.userData = {
+                        userId: this.mockUserId || 'user_' + Date.now() + Math.random().toString(36).substring(2, 9),
+                        userName: this.mockUserName || "Dog Lover",
+                        joinDate: new Date().toISOString(),
+                        points: 0,
+                        energy: this.config.maxEnergy,
+                        maxEnergy: this.config.maxEnergy,
+                        energyPerTap: this.config.energyPerTap,
+                        energyRegenRatePerSecond: this.config.energyRegenRatePerSecond,
+                        pointsPerTap: this.config.pointsPerTap,
+                        lastEnergyUpdateTimestamp: Date.now(),
+                        completedTasks: [],
+                        referralCode: 'DOG' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+                        withdrawalHistory: [],
+                        lastActivePage: 'tap'
+                    };
+                }
+                // Ensure energy is not above maxEnergy after loading
+                if (this.userData.energy > this.userData.maxEnergy) {
+                    this.userData.energy = this.userData.maxEnergy;
+                }
+                this.saveUserData();
+            },
+
+            saveUserData() {
+                this.userData.lastActivePage = this.activePage;
+                localStorage.setItem('tapDogUserData', JSON.stringify(this.userData));
+            },
+
+            setupEventListeners() {
+                this.elements.navButtons.forEach(button => {
+                    button.addEventListener('click', () => this.showPage(button.dataset.page));
+                });
+
+                this.elements.tapTargetIcon.addEventListener('click', (event) => this.handleTap(event));
+                
+                this.elements.withdrawForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleWithdraw();
+                });
+                this.elements.withdrawMethodSelect.addEventListener('change', () => this.renderWithdrawDetailsFields());
+
+                this.elements.modalOkButton.addEventListener('click', () => this.hideModal());
+                this.elements.modalCancelButton.addEventListener('click', () => this.hideModal());
+                
+                this.elements.copyReferralButton.addEventListener('click', () => this.copyReferralLink());
+
+                // Recalculate energy on visibility change (e.g., tab unfocused)
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        this.regenerateEnergy(); // Recalculate offline energy gain
+                    }
+                });
+            },
+            
+            copyReferralLink() {
+                const link = this.elements.profileReferralLink.textContent;
+                navigator.clipboard.writeText(link).then(() => {
+                    this.showModal({ title: 'Copied!', message: 'Referral link copied to clipboard.', type: 'alert' });
+                }).catch(err => {
+                    this.showModal({ title: 'Error', message: 'Failed to copy link.', type: 'alert' });
+                    console.error('Failed to copy referral link: ', err);
+                });
+            },
+
+            renderAllSections() {
+                this.renderProfilePage();
+                this.renderTaskPage();
+                this.renderWithdrawPage(); // Includes rendering withdrawal methods and history
+                // Tap page is mostly static, UI updates handle dynamic parts
+            },
+
+            showPage(pageId) {
+                this.activePage = pageId;
+                Object.values(this.elements.pages).forEach(page => page.classList.remove('active'));
+                this.elements.pages[pageId].classList.add('active');
+
+                this.elements.navButtons.forEach(button => {
+                    button.classList.toggle('active', button.dataset.page === pageId);
+                });
+                this.saveUserData(); // Save last active page
+            },
+
+            updateUI() {
+                // Global points display
+                this.elements.tapPoints.textContent = Math.floor(this.userData.points);
+                this.elements.profilePoints.textContent = Math.floor(this.userData.points);
+
+                // Energy display
+                this.elements.energyValue.textContent = Math.floor(this.userData.energy);
+                this.elements.maxEnergyValue.textContent = this.userData.maxEnergy;
+                const energyPercentage = (this.userData.energy / this.userData.maxEnergy) * 100;
+                this.elements.energyBar.style.width = `${energyPercentage}%`;
+            },
+
+            // Profile Section
+            renderProfilePage() {
+                this.elements.profileName.textContent = this.userData.userName;
+                this.elements.profileJoinDate.textContent = new Date(this.userData.joinDate).toLocaleDateString();
+                this.elements.profileReferralLink.textContent = `${window.location.origin}${window.location.pathname}?ref=${this.userData.referralCode}`;
+                this.updateUI(); // For points
+            },
+
+            // Tap Section
+            handleTap(event) {
+                if (this.userData.energy >= this.userData.energyPerTap) {
+                    this.userData.points += this.userData.pointsPerTap;
+                    this.userData.energy -= this.userData.energyPerTap;
+                    this.userData.lastEnergyUpdateTimestamp = Date.now(); // Reset timestamp on tap
+                    
+                    this.createFloatingPointAnimation(event);
+                    
+                    this.updateUI();
+                    this.saveUserData();
+                } else {
+                    // Optional: feedback for no energy (e.g., shake animation, message)
+                    this.showToast("Not enough energy!");
+                }
+            },
+
+            createFloatingPointAnimation(event) {
+                const feedback = document.createElement('div');
+                feedback.className = 'floating-point';
+                feedback.textContent = `+${this.userData.pointsPerTap}`;
+                
+                // Position near the tap
+                const rect = this.elements.tapTargetIcon.getBoundingClientRect();
+                const x = event.clientX - rect.left; 
+                const y = event.clientY - rect.top;  
+                
+                feedback.style.left = `${x}px`;
+                feedback.style.top = `${y}px`;
+
+                this.elements.tapTargetContainer.appendChild(feedback);
+                setTimeout(() => feedback.remove(), 1000); // Remove after animation
+            },
+
+            startEnergyRegeneration() {
+                this.regenerateEnergy(); // Initial call to catch up any offline regen
+                if (this.energyRegenTimer) clearInterval(this.energyRegenTimer);
+                this.energyRegenTimer = setInterval(() => {
+                    this.regenerateEnergy();
+                }, this.config.energyRegenInterval);
+            },
+            
+            regenerateEnergy() {
+                const now = Date.now();
+                const elapsedSeconds = (now - this.userData.lastEnergyUpdateTimestamp) / 1000;
+                
+                if (elapsedSeconds > 0) {
+                    const energyToRegen = elapsedSeconds * this.userData.energyRegenRatePerSecond;
+                    if (this.userData.energy < this.userData.maxEnergy) {
+                        this.userData.energy = Math.min(this.userData.maxEnergy, this.userData.energy + energyToRegen);
+                        this.userData.lastEnergyUpdateTimestamp = now;
+                        this.updateUI();
+                        this.saveUserData();
+                    } else {
+                         this.userData.lastEnergyUpdateTimestamp = now; // Keep timestamp updated even if full
+                    }
+                }
+            },
+
+            // Task Section
+            renderTaskPage() {
+                this.elements.taskList.innerHTML = ''; // Clear existing tasks
+                this.tasks.forEach(task => {
+                    const li = document.createElement('li');
+                    li.className = 'task-item';
+                    const isCompleted = this.userData.completedTasks.includes(task.id);
+                    
+                    li.innerHTML = `
+                        <div class="task-info">
+                            <strong>${task.title}</strong><br>
+                            <small>Reward: ${task.points} points | Duration: ${task.duration}</small>
+                        </div>
+                        <button data-task-id="${task.id}" ${isCompleted ? 'disabled' : ''}>
+                            ${isCompleted ? 'Completed' : 'Watch & Claim'}
+                        </button>
+                    `;
+                    
+                    const button = li.querySelector('button');
+                    if (!isCompleted) {
+                        button.addEventListener('click', () => this.handleCompleteTask(task.id));
+                    }
+                    this.elements.taskList.appendChild(li);
+                });
+            },
+            
+            handleCompleteTask(taskId) {
+                if (this.userData.completedTasks.includes(taskId)) {
+                    this.showModal({ title: "Task", message: "You have already completed this task.", type: 'alert'});
+                    return;
+                }
+
+                const task = this.tasks.find(t => t.id === taskId);
+                if (!task) return;
+
+                // Simulate watching video (open link)
+                window.open(task.youtubeLink, '_blank');
+                
+                // For actual implementation, you might need a callback or a delay
+                // For this simulation, we'll allow immediate claim after "opening"
+                this.showModal({
+                    title: "Confirm Task Completion",
+                    message: `Did you watch "${task.title}"? You will earn ${task.points} points.`,
+                    type: 'confirm',
+                    onConfirm: () => {
+                        this.userData.points += task.points;
+                        this.userData.completedTasks.push(taskId);
+                        this.saveUserData();
+                        this.renderTaskPage(); // Re-render tasks to update button state
+                        this.updateUI(); // Update points display
+                        this.showModal({title: "Task Completed!", message: `You earned ${task.points} points.`, type: 'alert'});
+                    }
+                });
+            },
+
+            // Withdraw Section
+            renderWithdrawPage() {
+                // Populate withdrawal methods
+                this.elements.withdrawMethodSelect.innerHTML = this.withdrawalMethods
+                    .map(method => `<option value="${method.id}">${method.name}</option>`)
+                    .join('');
+                this.renderWithdrawDetailsFields(); // Render fields for the default selected method
+                this.renderWithdrawalHistory();
+            },
+
+            renderWithdrawDetailsFields() {
+                const selectedMethodId = this.elements.withdrawMethodSelect.value;
+                const method = this.withdrawalMethods.find(m => m.id === selectedMethodId);
+                this.elements.withdrawDetailsFields.innerHTML = ''; // Clear old fields
+
+                if (method && method.fields) {
+                    method.fields.forEach(field => {
+                        const fieldGroup = document.createElement('div');
+                        const label = document.createElement('label');
+                        label.setAttribute('for', `withdraw-${field.name}`);
+                        label.textContent = field.label + ':';
+                        
+                        const input = document.createElement('input');
+                        input.type = field.type;
+                        input.id = `withdraw-${field.name}`;
+                        input.name = field.name;
+                        input.placeholder = field.placeholder || '';
+                        input.required = true;
+                        
+                        fieldGroup.appendChild(label);
+                        fieldGroup.appendChild(input);
+                        this.elements.withdrawDetailsFields.appendChild(fieldGroup);
+                    });
+                }
+            },
+            
+            handleWithdraw() {
+                const amount = parseFloat(this.elements.withdrawAmountInput.value);
+                const methodId = this.elements.withdrawMethodSelect.value;
+                const method = this.withdrawalMethods.find(m => m.id === methodId);
+
+                if (isNaN(amount) || amount <= 0) {
+                    this.showModal({title: "Withdrawal Error", message: "Please enter a valid amount.", type: 'alert'});
+                    return;
+                }
+                if (amount > this.userData.points) {
+                    this.showModal({title: "Withdrawal Error", message: "Insufficient points.", type: 'alert'});
+                    return;
+                }
+
+                const details = {};
+                if (method.fields) {
+                    let allFieldsValid = true;
+                    method.fields.forEach(field => {
+                        const inputElement = document.getElementById(`withdraw-${field.name}`);
+                        if (inputElement.checkValidity()){
+                           details[field.name] = inputElement.value;
+                        } else {
+                           inputElement.reportValidity();
+                           allFieldsValid = false;
+                        }
+                    });
+                    if (!allFieldsValid) {
+                        this.showModal({title: "Withdrawal Error", message: "Please fill all required withdrawal details correctly.", type: 'alert'});
+                        return;
+                    }
+                }
+                
+                // Confirmation Modal
+                this.showModal({
+                    title: "Confirm Withdrawal",
+                    message: `Withdraw ${amount} points via ${method.name}?`,
+                    type: 'confirm',
+                    onConfirm: () => {
+                        this.userData.points -= amount;
+                        this.userData.withdrawalHistory.unshift({ // Add to start of array
+                            id: 'wd_' + Date.now(),
+                            date: new Date().toISOString(),
+                            amount: amount,
+                            method: method.name,
+                            status: 'Processing', // Simulated status
+                            details: details 
+                        });
+                        this.saveUserData();
+                        this.updateUI();
+                        this.elements.withdrawAmountInput.value = ''; // Clear amount
+                        this.renderWithdrawDetailsFields(); // Re-render to clear fields
+                        this.renderWithdrawalHistory();
+                        this.showModal({ title: "Withdrawal Requested", message: `Your withdrawal of ${amount} points is being processed.`, type: 'alert'});
+                    }
+                });
+            },
+
+            renderWithdrawalHistory() {
+                this.elements.withdrawalHistoryList.innerHTML = '';
+                if (this.userData.withdrawalHistory.length === 0) {
+                    this.elements.withdrawalHistoryList.innerHTML = '<li>No withdrawal history yet.</li>';
+                    return;
+                }
+                this.userData.withdrawalHistory.forEach(item => {
+                    const li = document.createElement('li');
+                    const date = new Date(item.date).toLocaleString();
+                    let detailsString = Object.entries(item.details)
+                        .map(([key, value]) => `${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${value}`) // Format key and show value
+                        .join(', ');
+                    if (detailsString.length > 50) detailsString = detailsString.substring(0, 50) + '...'; // Truncate long details
+
+                    li.innerHTML = `
+                        <strong>${item.amount} points</strong> via ${item.method} on ${date}<br>
+                        <small>Status: ${item.status} | Details: ${detailsString || 'N/A'}</small>
+                    `;
+                    this.elements.withdrawalHistoryList.appendChild(li);
+                });
+            },
+
+            // Modal
+            showModal({title, message, type = 'alert', onConfirm = null, onCancel = null}) {
+                this.elements.modalTitle.textContent = title;
+                this.elements.modalMessage.textContent = message;
+
+                this.elements.modalOkButton.style.display = 'none';
+                this.elements.modalConfirmButton.style.display = 'none';
+                this.elements.modalCancelButton.style.display = 'none';
+
+                if (type === 'alert') {
+                    this.elements.modalOkButton.style.display = 'inline-block';
+                    this.elements.modalOkButton.onclick = () => {
+                        this.hideModal();
+                        if (onConfirm) onConfirm(); // Alert can also have a confirm action
+                    };
+                } else if (type === 'confirm') {
+                    this.elements.modalConfirmButton.style.display = 'inline-block';
+                    this.elements.modalCancelButton.style.display = 'inline-block';
+                    this.elements.modalConfirmButton.onclick = () => {
+                        this.hideModal();
+                        if (onConfirm) onConfirm();
+                    };
+                    this.elements.modalCancelButton.onclick = () => {
+                        this.hideModal();
+                        if (onCancel) onCancel();
+                    };
+                }
+                this.elements.modalContainer.classList.add('visible');
+            },
+
+            hideModal() {
+                this.elements.modalContainer.classList.remove('visible');
+                 // Clear handlers to prevent multiple calls if modal is reused quickly
+                this.elements.modalOkButton.onclick = null;
+                this.elements.modalConfirmButton.onclick = null;
+                this.elements.modalCancelButton.onclick = null;
+            },
+
+            showToast(message, duration = 2000) {
+                let toast = document.getElementById('toast-notification');
+                if (!toast) {
+                    toast = document.createElement('div');
+                    toast.id = 'toast-notification';
+                    toast.style.position = 'fixed';
+                    toast.style.bottom = '70px'; // Above nav bar
+                    toast.style.left = '50%';
+                    toast.style.transform = 'translateX(-50%)';
+                    toast.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                    toast.style.color = 'white';
+                    toast.style.padding = '10px 20px';
+                    toast.style.borderRadius = '5px';
+                    toast.style.zIndex = '3000';
+                    toast.style.opacity = '0';
+                    toast.style.transition = 'opacity 0.3s ease';
+                    document.body.appendChild(toast);
+                }
+                
+                toast.textContent = message;
+                toast.style.opacity = '1';
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                }, duration);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>
